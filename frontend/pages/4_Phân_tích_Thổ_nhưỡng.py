@@ -3,7 +3,7 @@ File: pages/4_Phân_tích_Thổ_nhưỡng.py
 Description:
     Đây là trang "Phân tích Thổ nhưỡng" (Đất) của ứng dụng.
     Trang này chịu trách nhiệm:
-    1. Lấy dữ liệu (master data) đã được tải sẵn từ st.session_state.
+    1. Lấy dữ liệu.
     2. Giả định dữ liệu đất (soil) đã được chuẩn hóa (ví dụ: %) từ CSDL.
     3. Hiển thị 2 tab: "Phân bố Thổ nhưỡng" và "Tương quan (Đất & Nông nghiệp)".
     4. Tab "Phân bố": Trực quan hóa 1 chỉ số đất (ví dụ: pH, Nitơ)
@@ -17,13 +17,10 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-# --- 1. LẤY DỮ LIỆU TỪ SESSION STATE ---
-if 'data_loaded' not in st.session_state:
-    st.error("Lỗi: Dữ liệu chưa được tải. Vui lòng chạy lại file Trang_chủ.py chính.")
-    st.stop()
-    
-df_agri_master = st.session_state.df_agri_master
-df_soil_master = st.session_state.df_soil_master 
+from utils.load_data import load_master_data
+
+# --- 1. LẤY DỮ LIỆU ---
+df_agri_master, df_provinces_master, df_regions_master, df_climate_master, df_soil_master = load_master_data()
 
 # --- 2. NỘI DUNG TRANG 4: THỔ NHƯỠNG ---
 st.title("🌱 Phân tích Thổ nhưỡng (Đất)")

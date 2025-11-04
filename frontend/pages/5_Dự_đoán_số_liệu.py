@@ -23,16 +23,10 @@ import os
 import streamlit as st
 import pandas as pd
 import requests
+from utils.load_data import load_master_data
 
-# --- 1. LẤY DỮ LIỆU TỪ SESSION STATE ---
-if 'data_loaded' not in st.session_state:
-    st.error("Lỗi: Dữ liệu chưa được tải. Vui lòng chạy lại file Trang_chủ.py chính.")
-    st.stop()
-    
-df_agri_master = st.session_state.df_agri_master
-df_provinces_master = st.session_state.df_provinces_master
-df_climate_master = st.session_state.df_climate_master
-df_soil_master = st.session_state.df_soil_master
+# --- 1. LẤY DỮ LIỆU ---
+df_agri_master, df_provinces_master, df_regions_master, df_climate_master, df_soil_master = load_master_data()
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000/api/v1")
 
 # --- 2. NỘI DUNG TRANG 5: DỰ ĐOÁN ---

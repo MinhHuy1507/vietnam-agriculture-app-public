@@ -3,7 +3,7 @@ File: frontend/pages/1_Phân_tích_Nông_nghiệp.py
 Description:
     Đây là trang "Phân tích Nông nghiệp" của ứng dụng.
     Trang này chịu trách nhiệm:
-    1. Lấy dữ liệu (master data) đã được tải sẵn từ st.session_state.
+    1. Lấy dữ liệu.
     2. Hiển thị 2 tab: "Tổng quan" và "Phân tích Chuyên sâu".
     3. Tab "Tổng quan": Cung cấp các bộ lọc (filter) cho 1 NĂM duy nhất và
     hiển thị các chỉ số KPI, biểu đồ phân bổ (Bar, Pie, Treemap).
@@ -14,14 +14,10 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# --- 1. LẤY DỮ LIỆU TỪ SESSION STATE ---
-if 'data_loaded' not in st.session_state:
-    st.error("Lỗi: Dữ liệu chưa được tải. Vui lòng chạy lại file Trang_chủ.py chính.")
-    st.stop()
-    
-df_agri_master = st.session_state.df_agri_master
-df_provinces_master = st.session_state.df_provinces_master
-df_regions_master = st.session_state.df_regions_master
+from utils.load_data import load_master_data
+
+# --- 1. LẤY DỮ LIỆU ---
+df_agri_master, df_provinces_master, df_regions_master, df_climate_master, df_soil_master = load_master_data()
 
 # --- 2. TẠO 2 TAB: TỔNG QUAN VÀ CHUYÊN SÂU ---
 st.title("📊 Phân tích Số liệu Nông nghiệp")

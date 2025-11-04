@@ -3,7 +3,7 @@ File: pages/2_Phân_tích_Địa_lý.py
 Description:
     Đây là trang "Phân tích Địa lý" của ứng dụng.
     Trang này chịu trách nhiệm:
-    1. Lấy dữ liệu (master data) đã được tải sẵn từ st.session_state.
+    1. Lấy dữ liệu.
     2. Định nghĩa tọa độ (lon, lat) thủ công cho các Vùng kinh tế của Việt Nam.
     3. Định nghĩa "bản đồ dịch chuyển" (jitter map) và màu sắc cho từng loại nông sản.
     4. Cung cấp bộ lọc (theo Năm, Chỉ số, Nông sản) cho bản đồ.
@@ -16,12 +16,10 @@ import pandas as pd
 import plotly.express as px
 import pydeck as pdk 
 
-# --- 1. LẤY DỮ LIỆU TỪ SESSION STATE ---
-if 'data_loaded' not in st.session_state:
-    st.error("Lỗi: Dữ liệu chưa được tải. Vui lòng chạy lại file Trang_chủ.py chính.")
-    st.stop()
-    
-df_agri_master = st.session_state.df_agri_master
+from utils.load_data import load_master_data
+
+# --- 1. LẤY DỮ LIỆU ---
+df_agri_master, df_provinces_master, df_regions_master, df_climate_master, df_soil_master = load_master_data()
 
 # --- 2. TỌA ĐỘ TRUNG TÂM CÁC VÙNG ---
 REGION_COORDS = {
