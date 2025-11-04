@@ -33,11 +33,11 @@ pages = [
     st.Page(show_home_page, title="Trang chủ", icon="🏠", default=True), 
     
     # Other pages
-    st.Page("pages/1_Phan_tich_Nong_nghiep.py", title="Phân tích Nông nghiệp", icon="📊"),
-    st.Page("pages/2_Phan_tich_Dia_ly.py", title="Phân tích Địa lý", icon="🗺️"),
-    st.Page("pages/3_Phan_tich_Khi_hau.py", title="Phân tích Khí hậu", icon="☀️"),
-    st.Page("pages/4_Phan_tich_Tho_nhuong.py", title="Phân tích Thổ nhưỡng", icon="🌱"),
-    st.Page("pages/5_Du_doan_So_lieu.py", title="Dự đoán Số liệu", icon="🔮"),
+    st.Page("pages/1_Phân_tích_Nông_nghiệp.py", title="Phân tích Nông nghiệp", icon="📊"),
+    st.Page("pages/2_Phân_tích_Địa_lý.py", title="Phân tích Địa lý", icon="🗺️"),
+    st.Page("pages/3_Phân_tích_Khí_hậu.py", title="Phân tích Khí hậu", icon="☀️"),
+    st.Page("pages/4_Phân_tích_Thổ_nhưỡng.py", title="Phân tích Thổ nhưỡng", icon="🌱"),
+    st.Page("pages/5_Dự_đoán_số_liệu.py", title="Dự đoán Số liệu", icon="🔮"),
 ]
 nav = st.navigation(pages)
 
