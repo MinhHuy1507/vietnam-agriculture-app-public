@@ -1,0 +1,16 @@
+# Bỏ qua file bí mật của Streamlit (chứa Mapbox Token)
+.streamlit/
+secrets.toml
+.streamlit/secrets.toml
+
+# Bỏ qua các môi trường ảo
+*.venv/
+*venv*
+backend_venv/
+frontend_venv/
+
+# Bỏ qua file cache của Python
+__pycache__/
+
+# Bỏ qua các file hệ thống
+.DS_Store

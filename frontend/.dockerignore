@@ -1,0 +1,12 @@
+# Bỏ qua môi trường ảo
+*venv*
+.venv/
+frontend_venv/
+
+# Bỏ qua các file cache của Python
+__pycache__/
+*.pyc
+
+# Bỏ qua các file hệ thống
+.DS_Store
+.pytest_cache/
