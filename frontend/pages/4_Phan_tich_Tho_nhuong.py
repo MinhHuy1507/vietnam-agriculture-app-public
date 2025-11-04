@@ -1,15 +1,15 @@
 """
 File: pages/4_Phân_tích_Thổ_nhưỡng.py
 Description:
-    Đây là trang "Phân tích Thổ nhưỡng" (Đất) của ứng dụng.
-    Trang này chịu trách nhiệm:
-    1. Lấy dữ liệu.
-    2. Giả định dữ liệu đất (soil) đã được chuẩn hóa (ví dụ: %) từ CSDL.
-    3. Hiển thị 2 tab: "Phân bố Thổ nhưỡng" và "Tương quan (Đất & Nông nghiệp)".
-    4. Tab "Phân bố": Trực quan hóa 1 chỉ số đất (ví dụ: pH, Nitơ)
-    cho tất cả các tỉnh trên biểu đồ cột.
-    5. Tab "Tương quan": Phân tích mối liên hệ (scatter plot) giữa
-    1 chỉ số đất (trục X) và 1 chỉ số nông nghiệp (trung bình qua các năm, trục Y).
+    This is the "Soil Analysis" page of the application.
+    This page is responsible for:
+    1. Retrieving data.
+    2. Assuming soil data has been normalized (e.g., %) from the database.
+    3. Displaying 2 tabs: "Soil Distribution" and "Correlation (Soil & Agriculture)".
+    4. "Distribution" tab: Visualizes 1 soil metric (e.g., pH, Nitrogen)
+    for all provinces on a bar chart.
+    5. "Correlation" tab: Analyzes relationships (scatter plot) between
+    1 soil metric (X-axis) and 1 agricultural metric (averaged over years, Y-axis).
 """
 import streamlit as st
 import pandas as pd
@@ -19,10 +19,10 @@ from plotly.subplots import make_subplots
 
 from utils.load_data import load_master_data
 
-# --- 1. LẤY DỮ LIỆU ---
+# --- 1. RETRIEVE DATA ---
 df_agri_master, df_provinces_master, df_regions_master, df_climate_master, df_soil_master = load_master_data()
 
-# --- 2. NỘI DUNG TRANG 4: THỔ NHƯỠNG ---
+# --- 2. PAGE 4 CONTENT: SOIL ---
 st.title("🌱 Phân tích Thổ nhưỡng (Đất)")
 
 tab1, tab2 = st.tabs([
@@ -30,7 +30,7 @@ tab1, tab2 = st.tabs([
     "Tương quan (Đất & Nông nghiệp)"
 ])
 
-# --- TẠO DICTIONARY CHỌN LỰA ---
+# --- CREATE SELECTION DICTIONARY ---
 SOIL_METRIC_OPTIONS = {
     "Độ cao (m)": "surface_elevation",
     "Chỉ số NDVI (Độ xanh)": "avg_ndvi",
@@ -41,12 +41,12 @@ SOIL_METRIC_OPTIONS = {
     "Hàm lượng Sét (%)": "soil_clay_ratio"
 }
 
-# --- TAB 1: PHÂN BỐ (BẢN ĐỒ & BIỂU ĐỒ CỘT) ---
+# --- TAB 1: DISTRIBUTION (MAP & BAR CHART) ---
 with tab1:
     st.header("Phân bố các Chỉ số Đất")
     st.markdown("Xem xét sự khác biệt về chất lượng đất giữa các tỉnh.")
     
-    # BỘ LỌC CHO TAB 1
+    # TAB 1 FILTERS
     with st.container(border=True):
         selected_soil_label_t1 = st.selectbox(
             "Chọn chỉ số đất để phân tích:",
@@ -60,7 +60,7 @@ with tab1:
 
         st.markdown("---")
         
-        # Biểu đồ cột (Bar Chart)
+        # Bar chart
         st.subheader(f"Xếp hạng các tỉnh theo {selected_soil_label_t1}")
         df_bar = df_plot.sort_values(by=selected_soil_col_t1, ascending=False)
         fig_bar = px.bar(
@@ -78,16 +78,16 @@ with tab1:
         st.warning("Không tìm thấy dữ liệu thổ nhưỡng.")
 
 
-# --- TAB 2: TƯƠNG QUAN (ĐẤT & NÔNG NGHIỆP) ---
+# --- TAB 2: CORRELATION (SOIL & AGRICULTURE) ---
 with tab2:
     st.header("Phân tích Tương quan: Đất & Năng suất")
     st.markdown("Khám phá xem các yếu tố thổ nhưỡng (trục X) ảnh hưởng đến năng suất nông nghiệp (trục Y) như thế nào.")
 
-    # --- BỘ LỌC CHO TAB 2 ---
+    # --- TAB 2 FILTERS ---
     with st.container(border=True):
         col1, col2, col3 = st.columns(3)
         
-        # Lọc chỉ số nông nghiệp (Trục Y)
+        # Filter agricultural metric (Y-axis)
         with col1:
             agri_metric_options = {
                 "Năng suất (TB)": "yield_ta_per_ha",
@@ -101,7 +101,7 @@ with tab2:
             )
             selected_agri_col_t2 = agri_metric_options[selected_agri_label_t2]
         
-        # Lọc chỉ số đất (Trục X)
+        # Filter soil metric (X-axis)
         with col2:
             soil_metric_options_t2 = SOIL_METRIC_OPTIONS.copy()
             selected_soil_label_t2 = st.selectbox(
@@ -111,7 +111,7 @@ with tab2:
             )
             selected_soil_col_t2 = soil_metric_options_t2[selected_soil_label_t2]
 
-        # Lọc nông sản
+        # Filter commodity
         with col3:
             commodity_list_tab2 = ["Tất cả"] + sorted(df_agri_master['commodity'].unique())
             selected_commodity_tab2 = st.selectbox(
@@ -120,25 +120,25 @@ with tab2:
                 key="p5_tab2_commodity"
             )
             
-    # --- LỌC VÀ CHUẨN BỊ DỮ LIỆU TƯƠNG QUAN ---
+    # --- FILTER AND PREPARE CORRELATION DATA ---
     
-    # 1. Lọc Nông nghiệp (chỉ lấy cấp tỉnh)
+    # 1. Filter Agriculture data (only province level)
     df_agri_corr = df_agri_master[df_agri_master['region_level'] == 'province']
     
     if selected_commodity_tab2 != "Tất cả":
         df_agri_corr = df_agri_corr[df_agri_corr['commodity'] == selected_commodity_tab2]
     
-    # (Xử lý null)
+    # (Handle nulls)
     df_agri_corr['production_thousand_tonnes'] = pd.to_numeric(df_agri_corr['production_thousand_tonnes'], errors='coerce')
     df_agri_corr['area_thousand_ha'] = pd.to_numeric(df_agri_corr['area_thousand_ha'], errors='coerce')
     df_agri_corr['yield_ta_per_ha'] = pd.to_numeric(df_agri_corr['yield_ta_per_ha'], errors='coerce')
     mask_yield = df_agri_corr['yield_ta_per_ha'].isnull() & df_agri_corr['production_thousand_tonnes'].notnull() & df_agri_corr['area_thousand_ha'].notnull() & (df_agri_corr['area_thousand_ha'] > 0)
     df_agri_corr.loc[mask_yield, 'yield_ta_per_ha'] = (df_agri_corr['production_thousand_tonnes'] / df_agri_corr['area_thousand_ha']) * 10
     
-    # TÍNH TRUNG BÌNH NÔNG NGHIỆP QUA CÁC NĂM
+    # CALCULATE AVERAGE AGRICULTURE DATA OVER YEARS
     df_agri_avg = df_agri_corr.groupby('region_name')[selected_agri_col_t2].mean().reset_index()
 
-    # 2. Merge với Dữ liệu Đất
+    # 2. Merge with Soil Data
     df_corr = pd.merge(
         df_soil_master,
         df_agri_avg,
@@ -147,11 +147,11 @@ with tab2:
         how='inner'
     )
 
-    # --- HIỂN THỊ TAB 2 ---
+    # --- DISPLAY TAB 2 CONTENT ---
     if not df_corr.empty:
         st.markdown("---")
         
-        # Biểu đồ Tương quan (Scatter Plot)
+        # Correlation Chart (Scatter Plot)
         st.subheader(f"Tương quan: {selected_soil_label_t2} vs. {selected_agri_label_t2}")
         
         fig_scatter = px.scatter(

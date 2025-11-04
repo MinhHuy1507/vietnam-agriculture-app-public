@@ -1,26 +1,26 @@
 """
 File: backend/seed_db.py
 Description:
-    Đây là một script (kịch bản) chạy độc lập dùng để "nạp mồi" (seed)
-    dữ liệu từ các file CSV (trong thư mục /data) vào CSDL PostgreSQL.
+    This is a standalone script used to "seed" data from CSV files
+    (in the /data directory) into the PostgreSQL database.
     
-    Script này KHÔNG PHẢI là một phần của API, mà là một công cụ
-    tiện ích chạy 1 lần để thiết lập môi trường CSDL.
+    This script is NOT part of the API, but rather a
+    utility tool that runs once to initialize the database environment.
     
-    Nó cũng được 'docker-compose.yml' (dịch vụ 'db-seeder') sử dụng
-    để tự động nạp dữ liệu khi khởi chạy.
+    It is also used by 'docker-compose.yml' (via the 'db-seeder' service)
+    to automatically load data on startup.
 
-    Quy trình chạy:
-    1. reset_database(): Xóa (DROP) và tạo lại (CREATE) tất cả các bảng.
-    2. insert_provinces_data(): Nạp dữ liệu tỉnh (bảng 'province').
-    3. get_province_id(): Tạo một 'bản đồ' (dictionary) tra cứu
-       từ {province_name -> id} để dùng cho các khóa ngoại.
-    4. insert_soil_data(): Nạp dữ liệu đất, dùng 'bản đồ' ở trên để
-       điền 'province_id'.
-    5. insert_climate_data(): Nạp dữ liệu khí hậu, dùng 'bản đồ' ở trên
-       để điền 'province_id'.
-    6. insert_agriculture_data(): Nạp dữ liệu nông nghiệp, dùng 'bản đồ'
-       ở trên để điền 'province_id' (cho các hàng 'province').
+    Execution workflow:
+    1. reset_database(): Drop and recreate all tables.
+    2. insert_provinces_data(): Load province data (into 'province' table).
+    3. get_province_id(): Create a lookup dictionary
+       from {province_name -> id} for foreign key usage.
+    4. insert_soil_data(): Load soil data, using the lookup map above to
+       populate 'province_id'.
+    5. insert_climate_data(): Load climate data, using the lookup map above to
+       populate 'province_id'.
+    6. insert_agriculture_data(): Load agriculture data, using the lookup map
+       above to populate 'province_id' (for 'province' level rows).
 """
 import pandas as pd
 from sqlmodel import Session, SQLModel
@@ -28,14 +28,14 @@ from utils.connect_database import engine
 from model import Province, ClimateData, AgricultureData
 import os
 
-# Định nghĩa đường dẫn tuyệt đối đến thư mục 'data'
+# Define absolute path to the 'data' directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 
 def reset_database():
     """
-    Xóa (DROP) tất cả các bảng CSDL và tạo lại (CREATE) chúng
-    dựa trên 'model.py'. Đảm bảo một khởi đầu "sạch".
+    Drop all database tables and recreate them
+    based on 'model.py'. Ensures a clean start.
     """
     try:
         print("Resetting database")
@@ -50,8 +50,8 @@ def reset_database():
     
 def insert_provinces_data(path: str):
     """
-    Nạp dữ liệu từ 'province.csv' vào bảng 'province'.
-    Đây là bảng "cha", phải được nạp đầu tiên.
+    Load data from 'province.csv' into the 'province' table.
+    This is the "parent" table, must be loaded first.
     """
     try:
         print("Inserting provinces data")
@@ -68,12 +68,12 @@ def insert_provinces_data(path: str):
 
 def get_province_id():
     """
-    Đọc lại bảng 'province' (sau khi đã nạp) để tạo một 
-    dictionary tra cứu (map) {province_name -> id}.
-    Ví dụ: {'An Giang': 1, 'Ba Ria - Vung Tau': 2, ...}
+    Read the 'province' table (after loading) to create a 
+    lookup dictionary (map) {province_name -> id}.
+    Example: {'An Giang': 1, 'Ba Ria - Vung Tau': 2, ...}
     
     Returns:
-        dict: Một dictionary tra cứu tên tỉnh và ID.
+        dict: A dictionary mapping province names to IDs.
     """
     with Session(engine) as session:
         df_province_from_db = pd.read_sql("SELECT id, province_name FROM province", session.connection())
@@ -84,8 +84,8 @@ def get_province_id():
 
 def insert_climate_data(path: str):
     """
-    Nạp dữ liệu 'climate.csv' vào bảng 'climate_data'.
-    Sử dụng 'province_map' để điền khóa ngoại 'province_id'.
+    Load data from 'climate.csv' into the 'climate_data' table.
+    Uses 'province_map' to populate the 'province_id' foreign key.
     """
     try:
         print("Inserting climate data")
@@ -107,8 +107,8 @@ def insert_climate_data(path: str):
 
 def insert_soil_data(path: str):
     """
-    Nạp dữ liệu 'soil.csv' vào bảng 'soil_data'.
-    Sử dụng 'province_map' để điền khóa ngoại 'province_id'.
+    Load data from 'soil.csv' into the 'soil_data' table.
+    Uses 'province_map' to populate the 'province_id' foreign key.
     """
     try:
         print("Inserting soil data")
@@ -130,9 +130,9 @@ def insert_soil_data(path: str):
 
 def insert_agriculture_data(path: str):
     """
-    Nạp dữ liệu 'agriculture.csv' vào bảng 'agriculture_data'.
-    Sử dụng 'province_map' để điền khóa ngoại 'province_id'
-    cho các hàng có 'region_level' là 'province'.
+    Load data from 'agriculture.csv' into the 'agriculture_data' table.
+    Uses 'province_map' to populate the 'province_id' foreign key
+    for rows where 'region_level' is 'province'.
     """
     try:
         print("Inserting agriculture data")
@@ -160,8 +160,8 @@ def insert_agriculture_data(path: str):
 # MAIN
 if __name__ == "__main__":
     """
-    Đây là hàm main, chỉ chạy khi script này
-    được gọi trực tiếp (ví dụ: 'python seed_db.py').
+    This is the main function, only runs when this script
+    is called directly (e.g., 'python seed_db.py').
     """
     reset_database()
     insert_provinces_data(os.path.join(DATA_DIR, "province.csv"))

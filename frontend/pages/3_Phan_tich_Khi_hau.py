@@ -1,14 +1,14 @@
 """
 File: pages/3_Phân_tích_Khí_hậu.py
 Description:
-    Đây là trang "Phân tích Khí hậu" của ứng dụng.
-    Trang này chịu trách nhiệm:
-    1. Lấy dữ liệu.
-    2. Hiển thị 2 tab: "Xu hướng Khí hậu" và "Tương quan (với Nông nghiệp)".
-    3. Tab "Xu hướng": Cho phép người dùng chọn 1 Tỉnh và 1 khoảng năm,
-       sau đó hiển thị các biểu đồ (Line, Bar) cho tất cả các chỉ số khí hậu.
-    4. Tab "Tương quan": Cho phép người dùng chọn Tỉnh, Nông sản, Chỉ số Nông nghiệp
-       và Chỉ số Khí hậu để phân tích mối liên hệ (trục kép và scatter plot).
+    This is the "Climate Analysis" page of the application.
+    This page is responsible for:
+    1. Retrieving data.
+    2. Displaying 2 tabs: "Climate Trends" and "Correlation (with Agriculture)".
+    3. "Trends" tab: Allows users to select 1 Province and 1 year range,
+       then displays charts (Line, Bar) for all climate metrics.
+    4. "Correlation" tab: Allows users to select Province, Commodity, Agricultural Metric
+       and Climate Metric to analyze relationships (dual-axis and scatter plot).
 """
 import streamlit as st
 import pandas as pd
@@ -18,10 +18,10 @@ from plotly.subplots import make_subplots
 
 from utils.load_data import load_master_data
 
-# --- 1. LẤY DỮ LIỆU ---
+# --- 1. RETRIEVE DATA ---
 df_agri_master, df_provinces_master, df_regions_master, df_climate_master, df_soil_master = load_master_data()
 
-# --- 2. NỘI DUNG TRANG 4: KHÍ HẬU ---
+# --- 2. PAGE 4 CONTENT: CLIMATE ---
 st.title("☀️ Phân tích Khí hậu")
 
 tab1, tab2 = st.tabs([
@@ -29,12 +29,12 @@ tab1, tab2 = st.tabs([
     "Phân tích Tương quan (với Nông nghiệp)"
 ])
 
-# --- NỘI DUNG TAB 1: PHÂN TÍCH KHÍ HẬU ---
+# --- TAB 1 CONTENT: CLIMATE ANALYSIS ---
 with tab1:
     st.header("Xu hướng Khí hậu qua các năm")
     st.markdown("Chọn một tỉnh và một khoảng năm để xem các chỉ số khí hậu thay đổi như thế nào.")
     
-    # --- BỘ LỌC CHO TAB 1 ---
+    # --- TAB 1 FILTERS ---
     with st.container(border=True):
         col1, col2 = st.columns(2)
         with col1:
@@ -51,7 +51,7 @@ with tab1:
                 value=(min_year, max_year), step=1, key="p4_tab1_years"
             )
     
-    # LỌC DỮ LIỆU CHO TAB 1
+    # FILTER DATA FOR TAB 1
     df_climate_tab1 = df_climate_master[
         (df_climate_master['province_name'] == selected_province_tab1) &
         (df_climate_master['year'] >= selected_year_range_tab1[0]) &
@@ -61,7 +61,7 @@ with tab1:
     if not df_climate_tab1.empty:
         st.markdown("---")
         
-        # Biểu đồ 1: Nhiệt độ
+        # Chart 1: Temperature
         st.subheader(f"Xu hướng Nhiệt độ tại {selected_province_tab1}")
         temp_cols = [
             'avg_temperature', 'min_temperature', 'max_temperature', 
@@ -83,7 +83,7 @@ with tab1:
         fig_temp.for_each_trace(lambda t: t.update(name = temp_labels.get(t.name, t.name)))
         st.plotly_chart(fig_temp, use_container_width=True)
         
-        # Biểu đồ 2 & 3: Lượng mưa & Bức xạ
+        # Charts 2 & 3: Precipitation & Radiation
         col_chart1, col_chart2 = st.columns(2)
         with col_chart1:
             st.subheader("Xu hướng Lượng mưa")
@@ -103,7 +103,7 @@ with tab1:
             )
             st.plotly_chart(fig_solar, use_container_width=True)
 
-        # Biểu đồ 4, 5, 6: Độ ẩm, Gió, Áp suất
+        # Charts 4, 5, 6: Humidity, Wind, Pressure
         col_chart3, col_chart4, col_chart5 = st.columns(3)
         with col_chart3:
             st.subheader("Xu hướng Độ ẩm")
@@ -136,16 +136,16 @@ with tab1:
         st.warning("Không tìm thấy dữ liệu khí hậu cho lựa chọn này.")
 
 
-# --- NỘI DUNG TAB 2: PHÂN TÍCH TƯƠNG QUAN ---
+# --- TAB 2 CONTENT: CORRELATION ANALYSIS ---
 with tab2:
     st.header("Phân tích Tương quan Nông nghiệp & Khí hậu")
     st.markdown("So sánh sự thay đổi của các chỉ số nông nghiệp với các yếu tố khí hậu tại một tỉnh.")
 
-    # --- BỘ LỌC CHO TAB 2 ---
+    # --- TAB 2 FILTERS ---
     with st.container(border=True):
         col1, col2, col3 = st.columns(3)
         
-        # Chọn Tỉnh và Nông sản
+        # Select Province and Commodity
         with col1:
             province_list_tab2 = sorted(df_climate_master['province_name'].unique())
             selected_province_tab2 = st.selectbox(
@@ -159,7 +159,7 @@ with tab2:
                 options=commodity_list_tab2, index=0, key="p4_tab2_commodity"
             )
         
-        # Chọn Khoảng năm và Chỉ số Nông nghiệp
+        # Select Year Range and Agricultural Metric
         with col2:
             min_year_tab2 = int(df_climate_master['year'].min())
             max_year_tab2 = int(df_climate_master['year'].max())
@@ -180,7 +180,7 @@ with tab2:
             )
             selected_agri_col = agri_metric_options[selected_agri_label]
 
-        # Chọn Chỉ số Khí hậu
+        # Select Climate Metric
         with col3:
             climate_metric_options = {
                 "Nhiệt độ Trung bình": "avg_temperature",
@@ -201,16 +201,16 @@ with tab2:
             )
             selected_climate_col = climate_metric_options[selected_climate_label]
 
-    # --- LỌC DỮ LIỆU CHO TAB 2 ---
+    # --- FILTER DATA FOR TAB 2 ---
     
-    # 1. Lọc Khí hậu
+    # 1. Filter Climate data
     df_climate_tab2 = df_climate_master[
         (df_climate_master['province_name'] == selected_province_tab2) &
         (df_climate_master['year'] >= selected_year_range_tab2[0]) &
         (df_climate_master['year'] <= selected_year_range_tab2[1])
     ].sort_values(by='year')
 
-    # 2. Lọc Nông nghiệp
+    # 2. Filter Agriculture data
     df_agri_tab2 = df_agri_master[
         (df_agri_master['region_name'] == selected_province_tab2) &
         (df_agri_master['region_level'] == 'province') &
@@ -220,20 +220,20 @@ with tab2:
     if selected_commodity_tab2 != "Tất cả":
         df_agri_tab2 = df_agri_tab2[df_agri_tab2['commodity'] == selected_commodity_tab2]
     
-    # (Xử lý null)
+    # (Handle nulls)
     df_agri_tab2['production_thousand_tonnes'] = pd.to_numeric(df_agri_tab2['production_thousand_tonnes'], errors='coerce')
     df_agri_tab2['area_thousand_ha'] = pd.to_numeric(df_agri_tab2['area_thousand_ha'], errors='coerce')
     df_agri_tab2['yield_ta_per_ha'] = pd.to_numeric(df_agri_tab2['yield_ta_per_ha'], errors='coerce')
     mask_yield = df_agri_tab2['yield_ta_per_ha'].isnull() & df_agri_tab2['production_thousand_tonnes'].notnull() & df_agri_tab2['area_thousand_ha'].notnull() & (df_agri_tab2['area_thousand_ha'] > 0)
     df_agri_tab2.loc[mask_yield, 'yield_ta_per_ha'] = (df_agri_tab2['production_thousand_tonnes'] / df_agri_tab2['area_thousand_ha']) * 10
 
-    # Nhóm dữ liệu nông nghiệp theo năm
+    # Group agriculture data by year
     df_agri_trend_tab2 = df_agri_tab2.groupby('year')[selected_agri_col].sum().reset_index()
 
-    # 3. Merge hai bộ dữ liệu
+    # 3. Merge both datasets
     df_corr = pd.merge(df_climate_tab2, df_agri_trend_tab2, on='year', how='inner')
     
-    # TẠO TIÊU ĐỀ ĐỘNG
+    # CREATE DYNAMIC TITLE
     if selected_commodity_tab2 == "Tất cả":
         dynamic_agri_label = f"{selected_agri_label} (Tổng)"
     else:
@@ -242,17 +242,17 @@ with tab2:
     if not df_corr.empty:
         st.markdown("---")
         
-        # Biểu đồ 1: Tương quan qua thời gian (Trục kép)
+        # Chart 1: Correlation over time (Dual-axis)
         st.subheader(f"Xu hướng {dynamic_agri_label} vs. {selected_climate_label}")
         
         fig_corr_time = make_subplots(specs=[[{"secondary_y": True}]])
         
-        # Theo chỉ số nông nghiệp
+        # Agricultural metric
         fig_corr_time.add_trace(
             go.Bar(x=df_corr['year'], y=df_corr[selected_agri_col], name=dynamic_agri_label),
             secondary_y=False,
         )
-        # Theo chỉ số khí hậu
+        # Climate metric
         fig_corr_time.add_trace(
             go.Scatter(x=df_corr['year'], y=df_corr[selected_climate_col], name=selected_climate_label, mode='lines+markers'),
             secondary_y=True,
@@ -264,7 +264,7 @@ with tab2:
         fig_corr_time.update_yaxes(title_text=f"<b>{selected_climate_label}</b>", secondary_y=True)
         st.plotly_chart(fig_corr_time, use_container_width=True)
 
-        # Biểu đồ 2: Tương quan trực tiếp (Scatter Plot)
+        # Chart 2: Direct correlation (Scatter Plot)
         st.subheader(f"Phân tích Tương quan trực tiếp")
         
         fig_scatter = px.scatter(

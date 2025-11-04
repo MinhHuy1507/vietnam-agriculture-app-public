@@ -1,14 +1,14 @@
 """
 File: frontend/pages/1_Phân_tích_Nông_nghiệp.py
 Description:
-    Đây là trang "Phân tích Nông nghiệp" của ứng dụng.
-    Trang này chịu trách nhiệm:
-    1. Lấy dữ liệu.
-    2. Hiển thị 2 tab: "Tổng quan" và "Phân tích Chuyên sâu".
-    3. Tab "Tổng quan": Cung cấp các bộ lọc (filter) cho 1 NĂM duy nhất và
-    hiển thị các chỉ số KPI, biểu đồ phân bổ (Bar, Pie, Treemap).
-    4. Tab "Phân tích Chuyên sâu": Cung cấp các bộ lọc "Slicer" (chọn nhiều) để
-    so sánh xu hướng (Trends) qua nhiều năm.
+    This is the "Agriculture Analysis" page of the application.
+    This page is responsible for:
+    1. Retrieving data.
+    2. Displaying 2 tabs: "Overview" and "In-depth Analysis".
+    3. "Overview" tab: Provides filters for a SINGLE YEAR and
+    displays KPI metrics, distribution charts (Bar, Pie, Treemap).
+    4. "In-depth Analysis" tab: Provides "Slicer" filters (multi-select) to
+    compare trends across multiple years.
 """
 import streamlit as st
 import pandas as pd
@@ -16,22 +16,22 @@ import plotly.express as px
 
 from utils.load_data import load_master_data
 
-# --- 1. LẤY DỮ LIỆU ---
+# --- 1. RETRIEVE DATA ---
 df_agri_master, df_provinces_master, df_regions_master, df_climate_master, df_soil_master = load_master_data()
 
-# --- 2. TẠO 2 TAB: TỔNG QUAN VÀ CHUYÊN SÂU ---
+# --- 2. CREATE 2 TABS: OVERVIEW AND IN-DEPTH ---
 st.title("📊 Phân tích Số liệu Nông nghiệp")
 tab1, tab2 = st.tabs([
     "Tổng quan (Snapshot)", 
     "Phân tích Chuyên sâu (Trends & Comparisons)"
 ])
 
-# --- NỘI DUNG TAB 1 ---
+# --- TAB 1 CONTENT ---
 with tab1:
-    st.header("Tổng quan Snapshot")
-    st.markdown("Xem xét dữ liệu tại một thời điểm (năm) cụ thể.")
-    
-    # BỘ LỌC CỦA TRANG 1
+    st.header("Tổng quan (Snapshot)")
+    st.markdown("Xem xét dữ liệu tại một thời điểm cụ thể (năm).")
+
+    # TAB 1 FILTERS
     with st.container(border=True):
         col1, col2, col3, col4, col5 = st.columns(5)
         
@@ -64,7 +64,7 @@ with tab1:
             season_list = ["Tất cả"] + sorted(df_agri_master['season'].dropna().unique())
             selected_season = st.selectbox("Mùa vụ:", season_list, index=0, key="p1_season")
 
-    # LỌC DỮ LIỆU TRANG 1
+    # FILTER DATA FOR TAB 1
     df_page1 = df_agri_master.copy()
     df_page1 = df_page1[df_page1['year'] == selected_year]
     if selected_level != "Tất cả":
@@ -76,16 +76,16 @@ with tab1:
     if selected_season != "Tất cả":
         df_page1 = df_page1[df_page1['season'] == selected_season]
 
-    # HIỂN THỊ TRANG 1
+    # DISPLAY TAB 1 CONTENT
     if not df_page1.empty:
         st.markdown("---")
-        st.subheader(f"Chỉ số KPI cho năm {selected_year}")
+        st.subheader(f"Chỉ số KPI cho năm {selected_year}")     
         
-        # --- Xử lý Null ---
+        # --- Handle Null Values ---
         """
-        Có 1 số records bị thiếu 1 trong 3 chỉ số: production, area, yield.
-        Áp dụng công thức để tính toán chỉ số còn thiếu nếu có thể.
-        yield (tạ/ha) = production (1000 tấn) / area (1000 ha) * 10
+        Some records are missing one of three metrics: production, area, yield.
+        Apply formula to calculate missing metric when possible.
+        yield (quintals/ha) = production (1000 tonnes) / area (1000 ha) * 10
         """
         df_page1['production_thousand_tonnes'] = pd.to_numeric(df_page1['production_thousand_tonnes'], errors='coerce')
         df_page1['area_thousand_ha'] = pd.to_numeric(df_page1['area_thousand_ha'], errors='coerce')
@@ -97,7 +97,7 @@ with tab1:
         mask_area = df_page1['area_thousand_ha'].isnull() & df_page1['yield_ta_per_ha'].notnull() & df_page1['production_thousand_tonnes'].notnull() & (df_page1['yield_ta_per_ha'] > 0)
         df_page1.loc[mask_area, 'area_thousand_ha'] = (df_page1['production_thousand_tonnes'] / df_page1['yield_ta_per_ha']) * 10
         
-        # --- Tính toán KPI (sau khi xử lý null) ---
+        # --- Calculate KPIs (after handling nulls) ---
         total_production = df_page1['production_thousand_tonnes'].sum()
         total_area = df_page1['area_thousand_ha'].sum()
         avg_yield = (total_production / total_area) * 10 if total_area > 0 else 0
@@ -107,28 +107,28 @@ with tab1:
         col_kpi2.metric(label="Tổng Diện tích (Nghìn Ha)", value=f"{total_area:,.0f}")
         col_kpi3.metric(label="Năng suất Trung bình (Tạ/Ha)", value=f"{avg_yield:,.2f}")
         
-        # --- BIỂU ĐỒ PHÂN BỔ (Động) ---
+        # --- DISTRIBUTION CHARTS (Dynamic) ---
         st.markdown("---") 
         st.subheader(f"Phân tích Nông sản chi tiết năm {selected_year}")
         
         col_filter1, col_filter2 = st.columns(2)
-        # Bộ lọc chọn Chỉ số (metric)
+        # Filter to select Metric
         with col_filter1:
             metric_options = {"Sản lượng": "production_thousand_tonnes", "Diện tích": "area_thousand_ha", "Năng suất": "yield_ta_per_ha"}
             selected_metric_label = st.selectbox("Chọn chỉ số để phân tích:", options=list(metric_options.keys()), key="p1_metric_selector")
             selected_metric_col = metric_options[selected_metric_label]
             units = {"production_thousand_tonnes": "Nghìn Tấn", "area_thousand_ha": "Nghìn Ha", "yield_ta_per_ha": "Tạ/Ha"}
             selected_unit = units[selected_metric_col]
-        # Bộ lọc chọn Loại biểu đồ
+        # Filter to select Chart Type
         with col_filter2:
             chart_type_options = ["Biểu đồ cột (Top N)", "Biểu đồ tròn (Cơ cấu)", "Biểu đồ Treemap (Cơ cấu)", "Bảng dữ liệu (Chi tiết)"]
             selected_chart_type = st.selectbox("Chọn loại biểu đồ hiển thị:", options=chart_type_options, key="p1_chart_type_selector")
         
-        # Lọc bỏ các giá trị 0 hoặc null
+        # Filter out zero or null values
         df_page1_filtered = df_page1.dropna(subset=[selected_metric_col])
         df_page1_filtered = df_page1_filtered[df_page1_filtered[selected_metric_col] > 0]
 
-        # Hiển thị biểu đồ
+        # Display charts
         if selected_chart_type == "Biểu đồ cột (Top N)":
             st.markdown(f"**Top Nông sản theo {selected_metric_label}**")
             df_bar = df_page1_filtered.sort_values(by=selected_metric_col, ascending=False)
@@ -152,7 +152,7 @@ with tab1:
         st.warning("Không tìm thấy dữ liệu cho bộ lọc này.")
 
 
-# --- NỘI DUNG TAB 2  ---
+# --- TAB 2 CONTENT ---
 with tab2:
     st.header("Phân tích Chuyên sâu (Trends & Comparisons)")
     
@@ -184,7 +184,7 @@ with tab2:
             * **Ví dụ:** Lọc `Nông sản = [rice]`, `So sánh theo = Mùa vụ` -> Biểu đồ sẽ so sánh sản lượng Lúa vụ Đông Xuân, Hè Thu, v.v.
         """)
 
-    # --- BỘ LỌC CỦA TAB 2 ---
+    # --- TAB 2 FILTERS ---
     with st.container(border=True):
         st.markdown("<h4 style='text-align: center; color: #FF4B4B;'>Yếu tố So sánh Chính (Quyết định màu sắc)</h4>", unsafe_allow_html=True)
         _col1, col_center, _col3 = st.columns([1, 1.5, 1])
@@ -196,11 +196,11 @@ with tab2:
         st.markdown("---")
         col1, col2, col3 = st.columns(3)
         
-        # Bộ lọc chọn Không gian (Region/Province/Country)
+        # Filter for selecting spatial level (Region/Province/Country)
         """
         Region: 'Dong bang song Cuu Long', 'Dong Nam Bo', ...
         Province: 'An Giang', 'Ba Ria - Vung Tau', ...
-        Country: Chọn cả nước (không cần chọn gì thêm)
+        Country: Select nationwide (no additional selection needed)
         """
         with col1:
             st.markdown("#### 1. Lọc theo Không gian")
@@ -216,7 +216,7 @@ with tab2:
             else:
                 selected_provinces = []
         
-        # Bộ lọc chọn Dữ liệu loại nông sản và mùa vụ (Commodity/Season)
+        # Filter for selecting commodity type and season data (Commodity/Season)
         with col2:
             st.markdown("#### 2. Lọc theo Dữ liệu")
             options = sorted(df_agri_master['commodity'].unique())
@@ -225,7 +225,7 @@ with tab2:
             selected_seasons = st.multiselect("Chọn Mùa vụ:", options=options, default=options, key="p2_multi_season")
             st.info("Lọc theo mùa (trừ 'annual') chủ yếu áp dụng cho 'rice'.", icon="ℹ️")
 
-        # Bộ lọc chọn Thời gian & Chỉ số (Year Range & Metric)
+        # Filter for selecting time range & metric (Year Range & Metric)
         with col3:
             st.markdown("#### 3. Lọc theo Thời gian & Chỉ số")
             min_year = int(df_agri_master['year'].min())
@@ -237,7 +237,7 @@ with tab2:
             units = {"production_thousand_tonnes": "Nghìn Tấn", "area_thousand_ha": "Nghìn Ha", "yield_ta_per_ha": "Tạ/Ha"}
             selected_unit = units[selected_metric_col]
             
-    #  -- LỌC DỮ LIỆU TAB 2 --
+    # -- FILTER DATA FOR TAB 2 --
     df_page2 = df_agri_master.copy()
     df_page2 = df_page2[(df_page2['year'] >= selected_year_range[0]) & (df_page2['year'] <= selected_year_range[1])]
     df_page2 = df_page2[df_page2['region_level'] == selected_level_p2]
@@ -250,9 +250,9 @@ with tab2:
     if selected_seasons:
         df_page2 = df_page2[df_page2['season'].isin(selected_seasons)]
 
-    # -- HIỂN THỊ TAB 2 --
+    # -- DISPLAY TAB 2 CONTENT --
     if not df_page2.empty:
-        # --- Xử lý Null (tương tự ở tab 1) ---
+        # --- Handle Null values (similar to tab 1) ---
         df_page2['production_thousand_tonnes'] = pd.to_numeric(df_page2['production_thousand_tonnes'], errors='coerce')
         df_page2['area_thousand_ha'] = pd.to_numeric(df_page2['area_thousand_ha'], errors='coerce')
         df_page2['yield_ta_per_ha'] = pd.to_numeric(df_page2['yield_ta_per_ha'], errors='coerce')
@@ -262,23 +262,23 @@ with tab2:
         st.markdown("---")
         st.subheader(f"So sánh {selected_metric_label} (So sánh theo: {selected_color_label})")
         
-        # Nhóm dữ liệu theo 'year' và 'color_col'
+        # Group data by 'year' and 'color_col'
         df_trend = df_page2.dropna(subset=[color_col])
         df_trend = df_trend.groupby(['year', color_col])[selected_metric_col].sum().reset_index()
         
         if df_trend.empty:
             st.warning("Không tìm thấy dữ liệu sau khi nhóm. Hãy thử thay đổi bộ lọc.")
         else:
-            # BIỂU ĐỒ 1: Multi-Line Chart
+            # CHART 1: Multi-Line Chart
             fig_trend = px.line(df_trend, x='year', y=selected_metric_col, color=color_col, title=f"Xu hướng {selected_metric_label} qua các năm", markers=True, labels={'year': 'Năm', selected_metric_col: f'{selected_metric_label} ({selected_unit})', color_col: selected_color_label})
             st.plotly_chart(fig_trend, use_container_width=True)
             
-            # BIỂU ĐỒ 2: Grouped Bar Chart
+            # CHART 2: Grouped Bar Chart
             st.subheader(f"Phân tích chi tiết từng năm")
             fig_bar_grouped = px.bar(df_trend, x='year', y=selected_metric_col, color=color_col, barmode='group', title=f"So sánh {selected_metric_label} hàng năm", labels={'year': 'Năm', selected_metric_col: f'{selected_metric_label} ({selected_unit})', color_col: selected_color_label})
             st.plotly_chart(fig_bar_grouped, use_container_width=True)
             
-            # BIỂU ĐỒ 3: Stacked Area Chart (100%)
+            # CHART 3: Stacked Area Chart (100%)
             st.markdown("---")
             st.subheader(f"Phân tích Cơ cấu {selected_metric_label} (100%)")
             fig_area = px.area(df_trend, x='year', y=selected_metric_col, color=color_col, groupnorm='percent', title=f"Sự thay đổi Cơ cấu {selected_metric_label} qua các năm", labels={'year': 'Năm', selected_metric_col: f'Cơ cấu {selected_metric_label} (%)', color_col: selected_color_label})

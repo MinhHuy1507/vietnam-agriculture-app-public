@@ -1,15 +1,15 @@
 """
 File: pages/2_Phân_tích_Địa_lý.py
 Description:
-    Đây là trang "Phân tích Địa lý" của ứng dụng.
-    Trang này chịu trách nhiệm:
-    1. Lấy dữ liệu.
-    2. Định nghĩa tọa độ (lon, lat) thủ công cho các Vùng kinh tế của Việt Nam.
-    3. Định nghĩa "bản đồ dịch chuyển" (jitter map) và màu sắc cho từng loại nông sản.
-    4. Cung cấp bộ lọc (theo Năm, Chỉ số, Nông sản) cho bản đồ.
-    5. Xử lý logic để "làm phẳng" (flatten) dữ liệu, gán tọa độ và màu sắc.
-    6. Vẽ bản đồ 3D (PyDeck ColumnLayer) để hiển thị nhiều cột 3D (cho nhiều nông sản)
-    tại mỗi vùng.
+    This is the "Geographic Analysis" page of the application.
+    This page is responsible for:
+    1. Retrieving data.
+    2. Manually defining coordinates (lon, lat) for Vietnam's economic regions.
+    3. Defining "jitter map" and color scheme for each commodity type.
+    4. Providing filters (by Year, Metric, Commodity) for the map.
+    5. Processing logic to "flatten" data, assign coordinates and colors.
+    6. Rendering 3D map (PyDeck ColumnLayer) to display multiple 3D columns (for multiple commodities)
+    at each region.
 """
 import streamlit as st
 import pandas as pd
@@ -18,10 +18,10 @@ import pydeck as pdk
 
 from utils.load_data import load_master_data
 
-# --- 1. LẤY DỮ LIỆU ---
+# --- 1. RETRIEVE DATA ---
 df_agri_master, df_provinces_master, df_regions_master, df_climate_master, df_soil_master = load_master_data()
 
-# --- 2. TỌA ĐỘ TRUNG TÂM CÁC VÙNG ---
+# --- 2. CENTER COORDINATES FOR REGIONS ---
 REGION_COORDS = {
     "Dong bang song Hong": {"lon": 105.9700701, "lat": 20.9038458},
     "Trung du va mien nui phia Bac": {"lon": 104.6583622, "lat": 21.5824578},
@@ -33,7 +33,7 @@ REGION_COORDS = {
 df_region_coords = pd.DataFrame.from_dict(REGION_COORDS, orient='index', columns=['lon', 'lat'])
 df_region_coords = df_region_coords.reset_index().rename(columns={'index': 'region_name'})
 
-# --- 3. BẢN ĐỒ DỊCH CHUYỂN (JITTER) VÀ MÀU SẮC ---
+# --- 3. JITTER MAP AND COLOR SCHEME ---
 COMMODITY_VISUALS = {
     "rice":         {'off_lon': 0.0,  'off_lat': 0.0,  'color': [0, 128, 255]},
     "maize":        {'off_lon': 0.3,  'off_lat': 0.0,  'color': [255, 255, 0]},
@@ -45,17 +45,17 @@ COMMODITY_VISUALS = {
 df_comm_visuals = pd.DataFrame.from_dict(COMMODITY_VISUALS, orient='index')
 df_comm_visuals = df_comm_visuals.reset_index().rename(columns={'index': 'commodity'})
 
-# --- 4. NỘI DUNG TRANG 2: BẢN ĐỒ 3D THEO VÙNG ---
+# --- 4. PAGE 2 CONTENT: 3D MAP BY REGION ---
 st.title("🗺️ Phân tích Địa lý (Bản đồ Vùng 3D)")
 st.markdown("Trực quan hóa dữ liệu nông nghiệp theo các Vùng Kinh tế trên bản đồ 3D.")
 st.info("Bản đồ nền (Sáng/Tối) được tự động chọn theo cài đặt Theme của Streamlit.", icon="💡")
 
-# --- BỘ LỌC RIÊNG CỦA TRANG 2 ---
+# --- PAGE 2 SPECIFIC FILTERS ---
 st.subheader("Bộ lọc Dữ liệu Bản đồ")
 with st.container(border=True):
     col1, col2, col3 = st.columns(3)
     
-    # Bộ lọc năm
+    # Year filter
     with col1:
         min_year = int(df_agri_master['year'].min())
         max_year = int(df_agri_master['year'].max())
@@ -64,7 +64,7 @@ with st.container(border=True):
             value=max_year, step=1, key="p3_year"
         )
 
-    # Bộ lọc chỉ số
+    # Metric filter
     with col2:
         metric_options = {
             "Sản lượng": "production_thousand_tonnes",
@@ -79,7 +79,7 @@ with st.container(border=True):
         units = {"production_thousand_tonnes": "Nghìn Tấn", "area_thousand_ha": "Nghìn Ha", "yield_ta_per_ha": "Tạ/Ha"}
         selected_unit = units[selected_metric_col]
 
-    # Bộ lọc chọn nhiều nông sản
+    # Multi-commodity selection filter
     with col3:
         commodity_list = sorted(df_agri_master['commodity'].unique())
         selected_commodities_p3 = st.multiselect(
@@ -88,8 +88,8 @@ with st.container(border=True):
             default=commodity_list
         )
 
-# --- LỌC DỮ LIỆU TRANG 2 ---
-# 1. Lọc theo bộ lọc của người dùng
+# --- FILTER DATA FOR PAGE 2 ---
+# 1. Filter by user selections
 df_page3 = df_agri_master.copy()
 df_page3 = df_page3[
     (df_page3['year'] == selected_year_p3) &
@@ -101,11 +101,11 @@ else:
     st.warning("Vui lòng chọn ít nhất 1 loại nông sản.")
     st.stop()
 
-# 2. Xử lý Null
+# 2. Handle Null values
 """
-    Có 1 số records bị thiếu 1 trong 3 chỉ số: production, area, yield.
-    Áp dụng công thức để tính toán chỉ số còn thiếu nếu có thể.
-    yield (tạ/ha) = production (1000 tấn) / area (1000 ha) * 10
+    Some records are missing one of three metrics: production, area, yield.
+    Apply formula to calculate missing metric when possible.
+    yield (quintals/ha) = production (1000 tonnes) / area (1000 ha) * 10
 """
 df_page3['production_thousand_tonnes'] = pd.to_numeric(df_page3['production_thousand_tonnes'], errors='coerce')
 df_page3['area_thousand_ha'] = pd.to_numeric(df_page3['area_thousand_ha'], errors='coerce')
@@ -120,10 +120,10 @@ df_page3.loc[mask_prod, 'production_thousand_tonnes'] = (df_page3['yield_ta_per_
 mask_area = df_page3['area_thousand_ha'].isnull() & df_page3['yield_ta_per_ha'].notnull() & df_page3['production_thousand_tonnes'].notnull() & (df_page3['yield_ta_per_ha'] > 0)
 df_page3.loc[mask_area, 'area_thousand_ha'] = (df_page3['production_thousand_tonnes'] / df_page3['yield_ta_per_ha']) * 10
 
-# 3. Nhóm theo Vùng và Nông sản
+# 3. Group by Region and Commodity
 df_map_data_calculated = df_page3.groupby(['region_name', 'commodity'])[selected_metric_col].sum().reset_index()
 
-# 4. Nối (merge) 3 bảng: (Data đã tính) + (Tọa độ Vùng) + (Màu sắc & Jitter)
+# 4. Merge 3 tables: (Calculated Data) + (Region Coordinates) + (Color & Jitter)
 df_map_data = pd.merge(
     df_region_coords, df_map_data_calculated, on='region_name', how='inner'
 )
@@ -131,22 +131,22 @@ df_map_data = pd.merge(
     df_map_data, df_comm_visuals, on='commodity', how='left'
 ).fillna(0)
 
-# 5. Tạo tọa độ cuối cùng
+# 5. Create final coordinates
 df_map_data['lon_jittered'] = df_map_data['lon'] + df_map_data['off_lon']
 df_map_data['lat_jittered'] = df_map_data['lat'] + df_map_data['off_lat']
 
 
-# --- HIỂN THỊ TRANG 2 (PYDECK) ---
+# --- DISPLAY PAGE 2 CONTENT (PYDECK) ---
 st.markdown("---")
 st.subheader(f"Bản đồ 3D {selected_metric_label} các Vùng (Năm {selected_year_p3})")
 
 df_pydeck = df_map_data[df_map_data[selected_metric_col] > 0]
 
 if not df_pydeck.empty:
-    # Tạo cột tooltip (đã format) để sửa lỗi hiển thị của PyDeck 
+    # Create formatted tooltip column to fix PyDeck display issue
     df_pydeck['tooltip_metric'] = df_pydeck[selected_metric_col].apply(lambda x: f"{x:,.2f}")
     
-    # Tính toán tỷ lệ (scale) động cho chiều cao cột
+    # Dynamically calculate scale for column height
     max_value = df_pydeck[selected_metric_col].max()
     if max_value == 0: max_value = 1 
     

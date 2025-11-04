@@ -1,22 +1,22 @@
 """
 File: frontend/Trang_chu.py
 Description:
-    Đây là file chạy chính (entrypoint) cho ứng dụng Streamlit Frontend.
-    File này chịu trách nhiệm:
-    1. Cấu hình trang (st.set_page_config) ở chế độ wide (rộng)..
-    2. Định nghĩa và chạy menu điều hướng đa trang (st.navigation) hiển thị ở sidebar.
-    3. Hiển thị nội dung cho Trang chủ (trang chào mừng).
+    This is the main entry point for the Streamlit Frontend application.
+    This file is responsible for:
+    1. Configuring the page (st.set_page_config) in wide layout mode.
+    2. Defining and running the multi-page navigation menu (st.navigation) displayed in the sidebar.
+    3. Displaying content for the Home page (welcome page).
 """
 import streamlit as st
 
-# --- 1. CẤU HÌNH TRANG ---
+# --- 1. PAGE CONFIGURATION ---
 st.set_page_config(
     page_title="Dashboard Nông nghiệp VN",
     page_icon="🌾",
     layout="wide"
 )
 
-# --- 2. ĐỊNH NGHĨA NỘI DUNG TRANG CHỦ ---
+# --- 2. DEFINE HOME PAGE CONTENT ---
 def show_home_page():
     st.title("🌾 Chào mừng đến với Dashboard Nông nghiệp Việt Nam")
     st.markdown("---")
@@ -28,18 +28,18 @@ def show_home_page():
     """)
     st.info("Vui lòng chọn một trang phân tích từ thanh điều hướng bên trái để bắt đầu.", icon="👈")
 
-# --- 3. TẠO ĐIỀU HƯỚNG TÙY CHỈNH ---
+# --- 3. CREATE CUSTOM NAVIGATION ---
 pages = [
     st.Page(show_home_page, title="Trang chủ", icon="🏠", default=True), 
     
-    # Các trang con
-    st.Page("pages/1_Phân_tích_Nông_nghiệp.py", title="Phân tích Nông nghiệp", icon="📊"),
-    st.Page("pages/2_Phân_tích_Địa_lý.py", title="Phân tích Địa lý", icon="🗺️"),
-    st.Page("pages/3_Phân_tích_Khí_hậu.py", title="Phân tích Khí hậu", icon="☀️"),
-    st.Page("pages/4_Phân_tích_Thổ_nhưỡng.py", title="Phân tích Thổ nhưỡng", icon="🌱"),
-    st.Page("pages/5_Dự_đoán_số_liệu.py", title="Dự đoán Số liệu", icon="🔮"),
+    # Other pages
+    st.Page("pages/1_Phan_tich_Nong_nghiep.py", title="Phân tích Nông nghiệp", icon="📊"),
+    st.Page("pages/2_Phan_tich_Dia_ly.py", title="Phân tích Địa lý", icon="🗺️"),
+    st.Page("pages/3_Phan_tich_Khi_hau.py", title="Phân tích Khí hậu", icon="☀️"),
+    st.Page("pages/4_Phan_tich_Tho_nhuong.py", title="Phân tích Thổ nhưỡng", icon="🌱"),
+    st.Page("pages/5_Du_doan_So_lieu.py", title="Dự đoán Số liệu", icon="🔮"),
 ]
 nav = st.navigation(pages)
 
-# --- 4. CHẠY TRANG ĐƯỢC CHỌN ---
+# --- 4. RUN SELECTED PAGE ---
 nav.run()

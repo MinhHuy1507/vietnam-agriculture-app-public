@@ -1,30 +1,29 @@
 """
 File: backend/model.py
 Description:
-    File này định nghĩa 'models' (mô hình) cho Cơ sở dữ liệu (CSDL)
-    sử dụng SQLModel.
+    This file defines database 'models' using SQLModel.
 
-    Mỗi class ở đây đại diện cho một bảng (table) trong CSDL PostgreSQL.
-    - `table=True` báo cho SQLModel biết đây là một bảng CSDL.
-    - `Field(...)` được dùng để cung cấp các thông tin bổ sung như
-      khóa chính (primary_key), chỉ mục (index), và khóa ngoại (foreign_key).
+    Each class represents a table in the PostgreSQL database.
+    - `table=True` indicates to SQLModel that this is a database table.
+    - `Field(...)` is used to provide additional information such as
+      primary_key, index, and foreign_key constraints.
     
-    Các bảng được định nghĩa:
-    - Province: Bảng tra cứu (dimension) chứa thông tin 63 tỉnh thành.
-    - ClimateData: Bảng sự kiện (fact) chứa dữ liệu khí hậu hàng năm theo tỉnh.
-    - SoilData: Bảng sự kiện (fact) chứa dữ liệu thổ nhưỡng (đất) theo tỉnh.
-    - AgricultureData: Bảng sự kiện (fact) chính chứa dữ liệu nông nghiệp
-      (sản lượng, diện tích, năng suất) theo năm, vùng/tỉnh, nông sản, mùa vụ.
+    Defined tables:
+    - Province: Dimension table containing information for 63 provinces/cities.
+    - ClimateData: Fact table containing annual climate data by province.
+    - SoilData: Fact table containing soil data by province.
+    - AgricultureData: Primary fact table containing agricultural data
+      (production, area, yield) by year, region/province, commodity, and season.
 """
 
 from sqlmodel import SQLModel, Field
 from typing import Optional
 
-# --- 1. Bảng Province (Dimension Table) ---
+# --- 1. Province Table (Dimension Table) ---
 class Province(SQLModel, table=True):
     """
-    Mô hình cho bảng 'province'.
-    Lưu trữ thông tin tĩnh (tọa độ, v.v.) cho mỗi tỉnh.
+    Model for the 'province' table.
+    Stores static information (coordinates, etc.) for each province.
     """
     __tablename__ = "province"
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -37,11 +36,11 @@ class Province(SQLModel, table=True):
     longitude_min: Optional[float] = None
     longitude_max: Optional[float] = None
 
-# --- 2. Bảng Khí hậu (Fact Table) ---
+# --- 2. Climate Data Table (Fact Table) ---
 class ClimateData(SQLModel, table=True):
     """
-    Mô hình cho bảng 'climate_data'.
-    Lưu trữ dữ liệu khí hậu hàng năm.
+    Model for the 'climate_data' table.
+    Stores annual climate data.
     """
     __tablename__ = "climate_data"
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -59,14 +58,14 @@ class ClimateData(SQLModel, table=True):
     wind_speed: Optional[float] = None
     surface_pressure: Optional[float] = None
 
-    # Foreign key - connect to Province
+    # Foreign key - connection to Province table
     province_id: int = Field(foreign_key="province.id")
 
-# --- 3. Bảng Thổ nhưỡng (Fact Table) ---
+# --- 3. Soil Data Table (Fact Table) ---
 class SoilData(SQLModel, table=True):
     """
-    Mô hình cho bảng 'soil_data'.
-    Lưu trữ dữ liệu thổ nhưỡng (đất) cố định cho mỗi tỉnh.
+    Model for the 'soil_data' table.
+    Stores fixed soil data for each province.
     """
     __tablename__ = "soil_data"
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -79,18 +78,18 @@ class SoilData(SQLModel, table=True):
     soil_sand_ratio: Optional[float] = None
     soil_clay_ratio: Optional[float] = None
 
-    # Foreign key - connect to Province
+    # Foreign key - connection to Province table
     province_id: Optional[int] = Field(
         default=None, 
         foreign_key="province.id"
     )
 
-# --- 4. Bảng Nông nghiệp (Fact Table) ---
+# --- 4. Agriculture Data Table (Fact Table) ---
 class AgricultureData(SQLModel, table=True):
     """
-    Mô hình cho bảng 'agriculture_data'.
-    Lưu trữ dữ liệu nông nghiệp (sản lượng, diện tích, năng suất).
-    Đây là bảng "sự kiện" chính.
+    Model for the 'agriculture_data' table.
+    Stores agricultural data (production, area, yield).
+    This is the primary fact table.
     """
     __tablename__ = "agriculture_data"
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -106,7 +105,7 @@ class AgricultureData(SQLModel, table=True):
     region_name: str = Field(index=True)
     region_level: str = Field(index=True)
 
-    # Foreign key - connect to Province
+    # Foreign key - connection to Province table
     province_id: Optional[int] = Field(
         default=None, 
         foreign_key="province.id"

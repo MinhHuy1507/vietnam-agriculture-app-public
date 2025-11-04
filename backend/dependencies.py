@@ -1,29 +1,28 @@
 """
 File: backend/dependencies.py
 Description:
-    File này định nghĩa các Pydantic 'BaseModel' được sử dụng cho
-    Dependency Injection (Tiêm phụ thuộc) trong FastAPI.
+    This file defines Pydantic 'BaseModel' classes used for
+    Dependency Injection in FastAPI.
 
-    Thay vì định nghĩa 10 tham số (ví dụ: year, commodity, ...)
-    trên một hàm API, chúng ta nhóm chúng vào các class này.
-    FastAPI sẽ tự động "hiểu" các class này và biến chúng thành
-    các tham số truy vấn (Query Parameters) trên API.
+    Instead of defining 10 parameters (e.g., year, commodity, ...)
+    in an API function, These query classes group them into these classes.
+    FastAPI automatically recognizes these classes and converts them
+    into Query Parameters for the API.
 
-    Các class được định nghĩa:
-    - Enums (Year, Commodity, Season, RegionLevel): Định nghĩa các giá trị
-      lựa chọn cố định, giúp tạo dropdown trên Swagger UI và tự động
-      xác thực (validate) dữ liệu đầu vào.
-    - AgricultureQuery: Nhóm các tham số lọc cho API agriculture-data.
-    - ClimateQuery: Nhóm các tham số lọc cho API climate-data.
-    - SoilQuery: Nhóm các tham số lọc cho API soil-data.
-    - PredictionInput: Định nghĩa 21 features đầu vào cho API dự đoán.
-    - PredictionOutput: Định nghĩa cấu trúc JSON trả về của API dự đoán.
+    Defined classes:
+    - Enums (Year, Commodity, Season, RegionLevel): Define fixed choice values,
+      providing dropdown functionality in Swagger UI and automatic input validation.
+    - AgricultureQuery: Groups filter parameters for the agriculture-data API.
+    - ClimateQuery: Groups filter parameters for the climate-data API.
+    - SoilQuery: Groups filter parameters for the soil-data API.
+    - PredictionInput: Defines the 21 input features for the prediction API.
+    - PredictionOutput: Defines the JSON response structure of the prediction API.
 """
 from pydantic import BaseModel
 from typing import Optional
 from enum import Enum
 
-# --- 1. ENUMS (ĐỊNH NGHĨA CÁC LỰA CHỌN CỐ ĐỊNH) (Hỗ trợ hiển thị trên Swagger UI) ---
+# --- 1. ENUMS (FIXED CHOICE VALUES) (Support for Swagger UI display) ---
 class Year(int, Enum):
     Y1995 = 1995
     Y1996 = 1996
@@ -74,11 +73,11 @@ class RegionLevel(str, Enum):
     region = "region"
     country = "country"
 
-# --- 2. CÁC CLASS TRUY VẤN (QUERY PARAMS) ---
+# --- 2. QUERY PARAMETER CLASSES ---
 class AgricultureQuery(BaseModel):
     """
-    Nhóm các tham số lọc (query params) cho API /agriculture-data.
-    FastAPI sẽ tự động "Depends()" class này.
+    Groups filter parameters (query params) for the /agriculture-data API.
+    FastAPI will automatically handle Depends() for this class.
     """
     year: Optional[Year] = None
     commodity: Optional[Commodity] = None
@@ -88,28 +87,28 @@ class AgricultureQuery(BaseModel):
 
 class ClimateQuery(BaseModel):
     """
-    Nhóm các tham số lọc (query params) cho API /climate-data.
+    Groups filter parameters (query params) for the /climate-data API.
     """
     year: Optional[Year] = None
     province_name: Optional[str] = None
 
 class SoilQuery(BaseModel):
     """
-    Nhóm các tham số lọc (query params) cho API /soil-data.
+    Groups filter parameters (query params) for the /soil-data API.
     """
     province_name: Optional[str] = None
 
 class PredictionInput(BaseModel):
     """
-    Định nghĩa cấu trúc (schema) của 21 features đầu vào
-    mà API /predict sẽ nhận (dưới dạng JSON body).
+    Defines the structure (schema) of the 21 input features
+    that the /predict API will receive (as JSON body).
     """
     province_name: str
     year: int
     commodity: str
     season: str
     
-    # 10 yếu tố khí hậu
+    # 10 climate factors
     avg_temperature: Optional[float] = 0.0
     min_temperature: Optional[float] = 0.0
     max_temperature: Optional[float] = 0.0
@@ -121,7 +120,7 @@ class PredictionInput(BaseModel):
     wind_speed: Optional[float] = 0.0
     surface_pressure: Optional[float] = 0.0
     
-    # 7 yếu tố thổ nhưỡng
+    # 7 soil factors
     surface_elevation: Optional[float] = 0.0
     avg_ndvi: Optional[float] = 0.0
     soil_ph_level: Optional[float] = 0.0
@@ -132,8 +131,8 @@ class PredictionInput(BaseModel):
 
 class PredictionOutput(BaseModel):
     """
-    Định nghĩa cấu trúc (schema) JSON trả về
-    của API /predict.
+    Defines the JSON response structure
+    of the /predict API.
     """
     predicted_production: float
     predicted_area: float

@@ -1,18 +1,18 @@
 """
 File: backend/main.py
 Description:
-    Đây là file chạy chính (entrypoint) cho ứng dụng Backend (FastAPI).
-    File này chịu trách nhiệm:
-    1. Khởi tạo ứng dụng FastAPI.
-    2. Định nghĩa sự kiện 'startup' để tạo bảng CSDL (từ model.py).
-    3. Định nghĩa tất cả các API endpoint (đường dẫn) mà Frontend sẽ gọi:
-        - GET /: Trang chào mừng.
-        - GET /db-test: Kiểm tra kết nối CSDL.
-        - GET /api/v1/statistics/provinces: Lấy danh sách tỉnh.
-        - GET /api/v1/statistics/agriculture-data: Lấy dữ liệu nông nghiệp (có lọc).
-        - GET /api/v1/statistics/climate-data: Lấy dữ liệu khí hậu (đã JOIN).
-        - GET /api/v1/statistics/soil-data: Lấy dữ liệu thổ nhưỡng (đã JOIN).
-        - POST /api/v1/predict: Nhận 21 features và trả về dự đoán (hiện tại đang dùng logic tạm thời).
+    This is the main entry point for the Backend (FastAPI) application.
+    This file is responsible for:
+    1. Initializing the FastAPI application.
+    2. Defining the 'startup' event to create database tables (from model.py).
+    3. Defining all API endpoints (routes) that the Frontend will call:
+        - GET /: Welcome page.
+        - GET /db-test: Database connection verification.
+        - GET /api/v1/statistics/provinces: Retrieve list of provinces.
+        - GET /api/v1/statistics/agriculture-data: Retrieve agricultural data (with filtering).
+        - GET /api/v1/statistics/climate-data: Retrieve climate data (with JOIN).
+        - GET /api/v1/statistics/soil-data: Retrieve soil data (with JOIN).
+        - POST /api/v1/predict: Accept 21 features and return predictions (currently using mock logic).
 """
 from fastapi import FastAPI, Depends
 from utils.connect_database import get_session, get_db_and_tables
@@ -24,46 +24,46 @@ from model import AgricultureData, ClimateData, Province, SoilData
 from schemas import AgricultureDataRead, ClimateDataRead, ProvinceRead, SoilDataRead
 from dependencies import AgricultureQuery, ClimateQuery, SoilQuery, PredictionInput, PredictionOutput
 
-# --- 1. KHỞI TẠO ỨNG DỤNG ---
+# --- 1. APPLICATION INITIALIZATION ---
 app = FastAPI(
     title="Vietnam Agriculture API",
-    description="API để truy vấn dữ liệu nông nghiệp, khí hậu, thổ nhưỡng và dự báo sản lượng tại Việt Nam.",
+    description="API for querying agricultural, climate, and soil data, as well as yield prediction in Vietnam.",
     version="1.0.0"
 )
 
-# --- 2. SỰ KIỆN KHỞI ĐỘNG (STARTUP EVENT) ---
+# --- 2. STARTUP EVENT CONFIGURATION ---
 @app.on_event("startup")
 def start_up():
-    """Gọi create_db_and_tables để tạo database và tables với sự kiện startup."""
+    """Invoke create_db_and_tables to initialize database and tables on startup event."""
     get_db_and_tables()
 
-# --- 3. API ENDPOINTS CƠ BẢN ---
+# --- 3. BASIC API ENDPOINTS ---
 @app.get("/")
 def init():
     return {"Welcome to Agriculture App"}
 
 @app.get("/db-test")
 def get_db_connection(session: Session = Depends(get_session)):
-    """Endpoint để kiểm tra kết nối CSDL có thành công không."""
+    """Endpoint to verify successful database connection."""
     try: 
         result= session.exec(select(1)).one()
         if result == 1:
-                return {"status": "success", "message": "Kết nối CSDL thành công!", "result": result}
+                return {"status": "success", "message": "Database connection successful!", "result": result}
         else:
-            return {"status": "fail", "message": "Kết nối thành công nhưng kết quả không như mong đợi."}
+            return {"status": "fail", "message": "Connection successful but result is unexpected."}
         
     except Exception as e:
-        return {"status": "error", "message": "Kết nối CSDL thất bại.", "error_details": str(e)}
+        return {"status": "error", "message": "Database connection failed.", "error_details": str(e)}
     
-# --- 4. API ENDPOINTS (GET DATA) ---
+# --- 4. DATA RETRIEVAL API ENDPOINTS ---
 @app.get("/api/v1/statistics/agriculture-data", response_model=list[AgricultureDataRead])
 def get_agriculture_data(*, session: Annotated[Session, Depends(get_session)],
-                         # Tham số phân trang (Pagination)
-                         skip: int = 0, # Bỏ qua 'skip' record đầu tiên
-                         limit: Optional[int] = 1000, # Lấy tối đa 'limit' record (mặc định là 1000)
+                         # Pagination parameters
+                         skip: int = 0, # Skip first 'skip' records
+                         limit: Optional[int] = 1000, # Retrieve maximum 'limit' records (default is 1000)
                          query_params: AgricultureQuery = Depends()):
     """
-    API lấy dữ liệu nông nghiệp, hỗ trợ lọc và phân trang.
+    API endpoint for retrieving agricultural data with filtering and pagination support.
     """
     query = select(AgricultureData)
     if query_params.year:
@@ -81,13 +81,13 @@ def get_agriculture_data(*, session: Annotated[Session, Depends(get_session)],
     
 @app.get("/api/v1/statistics/climate-data", response_model=list[ClimateDataRead])
 def get_climate_data(*, session: Annotated[Session, Depends(get_session)],
-                       # Tham số phân trang (Pagination)
+                       # Pagination parameters
                        skip: int = 0,
                        limit: Optional[int] = 1000,
                        query_params: ClimateQuery = Depends()):
     """
-    API lấy dữ liệu khí hậu.
-    Tự động JOIN với bảng Province để lấy 'province_name'.
+    API endpoint for retrieving climate data.
+    Automatically performs JOIN with Province table to retrieve 'province_name'.
     """
     query = select(ClimateData, Province).join(Province, ClimateData.province_id == Province.id)
 
@@ -99,7 +99,7 @@ def get_climate_data(*, session: Annotated[Session, Depends(get_session)],
         
     query = query.offset(skip).limit(limit)
     
-    # results_from_db là một danh sách các cặp: [(climate1, province1), (climate2, province2), ...]
+    # results_from_db is a list of tuples: [(climate1, province1), (climate2, province2), ...]
     results_from_db = session.exec(query).all()
     
     response = []
@@ -112,13 +112,13 @@ def get_climate_data(*, session: Annotated[Session, Depends(get_session)],
 
 @app.get("/api/v1/statistics/soil-data", response_model=List[SoilDataRead])
 def get_soil_data(*, session: Annotated[Session, Depends(get_session)],
-                  # Tham số phân trang (Pagination)
+                  # Pagination parameters
                   skip: int = 0,
                   limit: Optional[int] = 1000,
                   query_params: SoilQuery = Depends()):
     """
-    API lấy dữ liệu thổ nhưỡng (soil) chi tiết cho từng tỉnh.
-    Tự động JOIN với bảng Province để lấy 'province_name'.
+    API endpoint for retrieving detailed soil data for each province.
+    Automatically performs JOIN with Province table to retrieve 'province_name'.
     """
     query = select(SoilData, Province).join(Province, SoilData.province_id == Province.id)
 
@@ -127,7 +127,7 @@ def get_soil_data(*, session: Annotated[Session, Depends(get_session)],
         
     query = query.offset(skip).limit(limit)
 
-    # results_from_db là một danh sách các cặp: [(soil1, province1), (soil2, province2), ...]
+    # results_from_db is a list of tuples: [(soil1, province1), (soil2, province2), ...]
     results_from_db = session.exec(query).all()
     
     response = []
@@ -140,16 +140,16 @@ def get_soil_data(*, session: Annotated[Session, Depends(get_session)],
 
 @app.get("/api/v1/statistics/provinces", response_model=List[ProvinceRead])
 def get_provinces(*, session: Annotated[Session, Depends(get_session)],
-                  # Tham số phân trang (Pagination)
+                  # Pagination parameters
                   skip: int = 0,
                   limit: Optional[int] = 100):
     """
-    API lấy danh sách tất cả các tỉnh/thành.
+    API endpoint for retrieving the list of all provinces/cities.
     """
     provinces = session.exec(select(Province).offset(skip).limit(limit)).all()
     return provinces
 
-# --- 5. API ENDPOINT (POST PREDICT) ---
+# --- 5. PREDICTION API ENDPOINT (POST) ---
 @app.post("/api/v1/predict", response_model=PredictionOutput)
 def post_prediction(
     *, 
@@ -157,11 +157,11 @@ def post_prediction(
     input_data: PredictionInput
 ):
     """
-    Endpoint dự đoán (HIỆN TẠI ĐANG DÙNG LOGIC "GIẢ" - MOCK).
-    Nhận 21 yếu tố đầu vào và trả về Sản lượng & Diện tích dự đoán.
+    Prediction endpoint (CURRENTLY USING MOCK LOGIC).
+    Accepts 21 input features and returns predicted production and area.
     
-    TODO: Thay thế khối "LOGIC GIẢ" bằng code gọi mô hình ML thật
-          (ví dụ: model.predict(...)) khi mô hình đã sẵn sàng.
+    TODO: Replace the "MOCK LOGIC" section with actual ML model invocation
+          (e.g., model.predict(...)) when the model is ready.
     """
     predicted_area = 100 + (input_data.avg_temperature * 5)
     

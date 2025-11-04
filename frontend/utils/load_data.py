@@ -1,11 +1,11 @@
 """
 File: frontend/utils/load_data.py
 Description:
-    Đây là file tiện ích (utility) TRUNG TÂM, chịu trách nhiệm
-    tải tất cả dữ liệu cho ứng dụng Streamlit.
+    This is the CENTRAL utility file responsible for
+    loading all data for the Streamlit application.
     
-    Các trang con (trong thư mục /pages) sẽ 'import' các hàm từ file này
-    thay vì tự định nghĩa logic gọi API.
+    Subpages (in the /pages directory) will 'import' functions from this file
+    instead of defining API call logic themselves.
 """
 
 import streamlit as st
@@ -13,15 +13,15 @@ import pandas as pd
 import requests
 import os
 
-# --- 1. ĐỊNH NGHĨA API BASE URL ---
-# Đọc URL API từ biến môi trường, nếu không có thì dùng localhost
+# --- 1. DEFINE API BASE URL ---
+# Read API URL from environment variable, use localhost if not available
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000/api/v1")
 
-# --- 2. HÀM GỌI API (HÀM "CON") ---
+# --- 2. API CALL FUNCTION (CHILD FUNCTION) ---
 @st.cache_data(ttl=600)
 def load_all_data_from_api(endpoint: str, params: dict = {}):
     """
-    Hàm gọi API chung, tự động xử lý phân trang để lấy TẤT CẢ dữ liệu.
+    Generic API call function that automatically handles pagination to retrieve ALL data.
     """
     all_data = []
     page_size = 1000  
@@ -45,31 +45,31 @@ def load_all_data_from_api(endpoint: str, params: dict = {}):
                 skip += page_size
                 current_params['skip'] = skip
             else:
-                st.error(f"Lỗi khi gọi API {endpoint}: {response.status_code}")
+                st.error(f"Error calling API {endpoint}: {response.status_code}")
                 return pd.DataFrame() 
         except Exception as e:
-            st.error(f"Lỗi kết nối API: {e}")
+            st.error(f"API connection error: {e}")
             return pd.DataFrame()
     
     return pd.DataFrame(all_data)
 
-# --- 3. HÀM TẢI DỮ LIỆU CHỦ (HÀM "MẸ") ---
+# --- 3. MASTER DATA LOADING FUNCTION (PARENT FUNCTION) ---
 @st.cache_data(ttl=600)
 def load_master_data():
     """
-    Tải tất cả các nguồn dữ liệu chính từ API một lần duy nhất.
-    Hàm này sẽ được các trang con gọi.
+    Load all primary data sources from the API once.
+    This function will be called by subpages.
     """
-    with st.spinner("Đang tải dữ liệu chính (master data)..."):
+    with st.spinner("Loading master data..."):
         df_agri = load_all_data_from_api("statistics/agriculture-data")
         df_provinces = load_all_data_from_api("statistics/provinces")
         df_climate = load_all_data_from_api("statistics/climate-data")
         df_soil = load_all_data_from_api("statistics/soil-data")
         
-        # Lấy df_regions từ df_agri
+        # Get df_regions from df_agri
         df_regions = df_agri[df_agri['region_level'] == 'region']
 
-        # Xử lý kiểu dữ liệu (rất quan trọng cho việc lọc)
+        # Process data types (critical for filtering)
         if 'year' in df_agri.columns:
             df_agri['year'] = pd.to_numeric(df_agri['year'], errors='coerce')
         if 'year' in df_climate.columns:

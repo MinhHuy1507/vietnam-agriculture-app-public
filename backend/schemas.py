@@ -1,26 +1,25 @@
 """
 File: backend/schemas.py
 Description:
-    File này định nghĩa các 'schemas' (lược đồ) Pydantic/SQLModel
-    được sử dụng để xác thực (validate) và tuần tự hóa (serialize)
-    dữ liệu cho các API endpoint.
+    This file defines Pydantic/SQLModel 'schemas' used for
+    data validation and serialization for API endpoints.
 
-    Các class này đóng vai trò là "Hợp đồng API":
-    - Chúng định nghĩa chính xác các trường (field) nào được trả về
-      cho người dùng (Frontend).
-    - Chúng giúp FastAPI tự động lọc bỏ các trường nội bộ (như 'province_id')
-      ra khỏi response (phản hồi) API.
+    These classes serve as "API Contracts":
+    - They define exactly which fields are returned
+      to users (Frontend).
+    - They help FastAPI automatically filter out internal fields (such as 'province_id')
+      from API responses.
 
-    Các class được định nghĩa:
-    - ProvinceRead: Schema trả về cho Bảng Tỉnh.
-    - ClimateDataRead: Schema trả về cho Bảng Khí hậu (đã JOIN, có 'province_name').
-    - SoilDataRead: Schema trả về cho Bảng Thổ nhưỡng (đã JOIN, có 'province_name').
-    - AgricultureDataRead: Schema trả về cho Bảng Nông nghiệp.
+    Defined classes:
+    - ProvinceRead: Response schema for Province table.
+    - ClimateDataRead: Response schema for Climate table (with JOIN, includes 'province_name').
+    - SoilDataRead: Response schema for Soil table (with JOIN, includes 'province_name').
+    - AgricultureDataRead: Response schema for Agriculture table.
 """
 from sqlmodel import SQLModel
 from typing import Optional
 
-# --- 1. SCHEMAS CHO PROVINCE ---
+# --- 1. SCHEMAS FOR PROVINCE ---
 class ProvinceBase(SQLModel):
     province_name: str
     latitude_center: Optional[float] = None
@@ -32,17 +31,17 @@ class ProvinceBase(SQLModel):
 
 class ProvinceRead(ProvinceBase):
     """
-    Schema trả về (Read) cho dữ liệu Tỉnh.
-    Chỉ định các trường sẽ được gửi khi API gọi /provinces.
+    Response schema (Read) for Province data.
+    Specifies fields that will be sent when API calls /provinces.
     """
     id: int
 
-# --- 2. SCHEMAS CHO AGRICULTURE DATA ---
+# --- 2. SCHEMAS FOR AGRICULTURE DATA ---
 class AgricultureDataRead(SQLModel):
     """
-    Schema trả về (Read) cho dữ liệu Nông nghiệp.
-    Cố tình BỎ QUA 'province_id' (khóa ngoại) để
-    không làm lộ chi tiết CSDL ra bên ngoài API.
+    Response schema (Read) for Agriculture data.
+    Intentionally EXCLUDES 'province_id' (foreign key) to
+    avoid exposing database details through the API.
     """
     id: int
     year: int
@@ -54,12 +53,12 @@ class AgricultureDataRead(SQLModel):
     region_name: str
     region_level: str
 
-# --- 3. SCHEMAS CHO CLIMATE DATA ---
+# --- 3. SCHEMAS FOR CLIMATE DATA ---
 class ClimateDataRead(SQLModel):
     """
-    Schema trả về (Read) cho dữ liệu Khí hậu.
-    Schema này bao gồm 'province_name' (được JOIN vào)
-    và cố tình BỎ QUA 'province_id'.
+    Response schema (Read) for Climate data.
+    This schema includes 'province_name' (from JOIN)
+    and intentionally EXCLUDES 'province_id'.
     """
     id: int
     year: int
@@ -75,12 +74,12 @@ class ClimateDataRead(SQLModel):
     wind_speed: Optional[float] = None
     surface_pressure: Optional[float] = None
 
-# --- 4. SCHEMAS CHO SOIL DATA ---
+# --- 4. SCHEMAS FOR SOIL DATA ---
 class SoilDataRead(SQLModel):
     """
-    Schema trả về (Read) cho dữ liệu Thổ nhưỡng.
-    Schema này bao gồm 'province_name' (được JOIN vào)
-    và cố tình BỎ QUA 'province_id'.
+    Response schema (Read) for Soil data.
+    This schema includes 'province_name' (from JOIN)
+    and intentionally EXCLUDES 'province_id'.
     """
     id: int
     province_name: str
