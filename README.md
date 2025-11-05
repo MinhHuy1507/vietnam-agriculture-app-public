@@ -19,7 +19,7 @@ The data itself is sourced, processed, and managed by a separate data pipeline p
 This application is deployed as two separate services:
 
 * **Frontend (Streamlit Dashboard):**
-    [vietnam-agri-app-public.streamlit.app](https://vietnam-agri-app-public.streamlit.app)
+    [vietnam-agri-app-public.streamlit.app](https://vietnam-agriculture-app-public.streamlit.app/)
 * **Backend (FastAPI API Docs):**
     [FastAPI/docs](https://vietnam-agriculture-app-public-backend.onrender.com/docs)
 

@@ -4,7 +4,7 @@ This directory contains the Streamlit application that serves as the visual, int
 
 It is a multi-page application designed to consume data from the FastAPI backend and present it to the end-user through a series of specialized dashboards.
 
-* **Live Dashboard:** [vietnam-agri-app-public.streamlit.app](https://vietnam-agri-app-public.streamlit.app)
+* **Live Dashboard:** [vietnam-agri-app-public.streamlit.app](https://vietnam-agriculture-app-public.streamlit.app/)
 * **Root README:** [Return to Main Project](../README.md)
 
 ---
