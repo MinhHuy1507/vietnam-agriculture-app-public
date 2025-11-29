@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Streamlit Dashboard Screenshot](<URL_ĐẾN_ẢNH_CHỤP_MÀN_HÌNH_ĐẸP_NHẤT_CỦA_TRANG_1_HOẶC_2>)
+![Streamlit Dashboard Screenshot](assets/front_dashboard.png)
 
 </div>
 
@@ -10,9 +10,20 @@ This repository contains the **application layer** for an end-to-end data engine
 
 The data itself is sourced, processed, and managed by a separate data pipeline project.
 
-* **Data Pipeline Repository (Nguồn dữ liệu):** [vietnam-agriculture-datalake](https://github.com/MinhHuy1507/vietnam-agriculture-datalake)
-
 ---
+
+## 🔗 Related Projects
+
+This application is the visualization layer of a complete end-to-end data engineering ecosystem. To understand how the data is collected and processed, check out the upstream repositories:
+
+*   **[Vietnam Agriculture Data Lake](https://github.com/MinhHuy1507/vietnam-agriculture-datalake-public)**
+    *   **Role:** Data Ingestion & Storage.
+    *   **Function:** Collects raw data from General Statistics Office Of Viet Nam (GSO), NASA POWER, Google Earth Engine.
+
+*   **[Vietnam Agriculture Data Warehouse](https://github.com/MinhHuy1507/vietnam-agriculture-data-warehouse-public)**
+    *   **Role:** Data Transformation & Modeling.
+    *   **Function:** Builds a Data Warehouse (Star Schema) from the Data Lake using Airflow and dbt for optimized analytics.
+
 
 ## 🚀 Live Demo
 
