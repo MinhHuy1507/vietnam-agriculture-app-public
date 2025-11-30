@@ -22,10 +22,25 @@ def show_home_page():
     st.markdown("---")
     st.header("Giới thiệu dự án")
     st.write("""
-        Đây là một dự án data engineer end-to-end, trình bày khả năng xây dựng
-        một hệ thống hoàn chỉnh từ thu thập dữ liệu (Pipeline), lưu trữ (Data Lake),
-        xây dựng API (Backend) cho đến trực quan hóa (Frontend).
+        Dự án này đóng vai trò là **Lớp Ứng dụng (Application Layer)** trong một hệ sinh thái Kỹ thuật Dữ liệu (Data Engineering) toàn diện. 
+        Nó minh họa khả năng xây dựng một hệ thống hoàn chỉnh từ khâu thu thập dữ liệu, lưu trữ, xử lý cho đến trực quan hóa.
+        
+        Hệ thống bao gồm Backend (FastAPI) và Frontend (Streamlit) hoạt động độc lập, phục vụ việc phân tích và trực quan hóa dữ liệu nông nghiệp Việt Nam.
     """)
+
+    st.subheader("🔗 Các dự án liên quan")
+    st.markdown("""
+    Ứng dụng này là lớp hiển thị (visualization layer). Để hiểu rõ quy trình dữ liệu được thu thập và xử lý, vui lòng tham khảo các dự án nguồn:
+
+    *   **[Vietnam Agriculture Data Lake](https://github.com/MinhHuy1507/vietnam-agriculture-datalake-public)**
+        *   **Vai trò:** Thu thập & Lưu trữ dữ liệu.
+        *   **Chức năng:** Thu thập dữ liệu thô từ Tổng cục Thống kê (GSO), NASA POWER, Google Earth Engine.
+
+    *   **[Vietnam Agriculture Data Warehouse](https://github.com/MinhHuy1507/vietnam-agriculture-data-warehouse-public)**
+        *   **Vai trò:** Chuyển đổi & Mô hình hóa dữ liệu.
+        *   **Chức năng:** Xây dựng Kho dữ liệu (Star Schema) từ Data Lake sử dụng Airflow và dbt.
+    """)
+
     st.info("Vui lòng chọn một trang phân tích từ thanh điều hướng bên trái để bắt đầu.", icon="👈")
 
 # --- 3. CREATE CUSTOM NAVIGATION ---
