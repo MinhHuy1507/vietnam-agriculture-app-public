@@ -1,6 +1,6 @@
-# Vietnam Agriculture Analytics API & Dashboard
-
 <div align="center">
+
+# Vietnam Agriculture Analytics API & Dashboard
 
 ![Streamlit Dashboard Screenshot](assets/front_dashboard.png)
 
